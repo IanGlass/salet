@@ -8,6 +8,7 @@ import {
   Param,
   Delete,
   NotFoundException,
+  Session,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDTO } from './dtos/create-user.dto';
@@ -24,14 +25,32 @@ export class UsersController {
     private authService: AuthService,
   ) {}
 
+  @Get('/whoami')
+  whoAmI(@Session() session: any) {
+    if (!session.userId) {
+      return null;
+    }
+
+    return this.usersService.findOne(session.userId);
+  }
+
   @Post('/signup')
-  createUser(@Body() body: CreateUserDTO) {
-    return this.authService.signup(body.email, body.password);
+  async createUser(@Body() body: CreateUserDTO, @Session() session: any) {
+    const user = await this.authService.signup(body.email, body.password);
+    session.userId = user.id;
+    return user;
+  }
+
+  @Post('signout')
+  signOut(@Session() session: any) {
+    session.userId = null;
   }
 
   @Post('/login')
-  login(@Body() body: CreateUserDTO) {
-    return this.authService.login(body.email, body.password);
+  async login(@Body() body: CreateUserDTO, @Session() session: any) {
+    const user = await this.authService.login(body.email, body.password);
+    session.userId = user.id;
+    return user;
   }
 
   @Get('/:id')
