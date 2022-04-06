@@ -15,19 +15,38 @@ describe('Authentication System', () => {
     await app.init();
   });
 
-  it('auth/signup/ (POST)', () => {
+  it('auth/signup/ (POST)', async () => {
     const signupEmail = 'test@test.com';
-    return request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .post('/auth/signup')
       .send({
         email: signupEmail,
         password: 'testpass',
       })
-      .expect(201)
-      .then((res) => {
-        const { id, email } = res.body;
-        expect(id).toBeDefined();
-        expect(email).toEqual(signupEmail);
-      });
+      .expect(201);
+
+    const { id, email } = response.body;
+    expect(id).toBeDefined();
+    expect(email).toEqual(signupEmail);
+  });
+  it('signup as new user then get currently logged in user', async () => {
+    const signupEmail = 'test@test.com';
+    const response = await request(app.getHttpServer())
+      .post('/auth/signup')
+      .send({
+        email: signupEmail,
+        password: 'testpass',
+      })
+      .expect(201);
+
+    const cookie = response.get('Set-Cookie');
+    expect(cookie).toBeDefined();
+
+    const { body } = await request(app.getHttpServer())
+      .get('/auth/whoami')
+      .set('Cookie', cookie)
+      .expect(200);
+
+    expect(body.email).toEqual(signupEmail);
   });
 });
