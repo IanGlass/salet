@@ -9,8 +9,6 @@ import { ReportsController } from './reports/reports.controller';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './users/users.entity';
-import { Report } from './reports/reports.entity';
 import { AuthService } from './users/auth.service';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cookieSession = require('cookie-session');
@@ -24,15 +22,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
     UsersModule,
     ReportsModule,
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'sqlite',
-        database: config.get<string>('DB_NAME'),
-        entities: [User, Report],
-        synchronize: true,
-      }),
-    }),
+    TypeOrmModule.forRoot(),
   ],
   controllers: [AppController, UsersController, ReportsController],
   providers: [
@@ -49,11 +39,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   ],
 })
 export class AppModule {
+  constructor(private configService: ConfigService) {}
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(
         cookieSession({
-          keys: ['1ee708de-ae0f-4959-91dc-0563957c8811'],
+          keys: [this.configService.get('COOKIE_KEY')],
         }),
       )
       .forRoutes('*');
