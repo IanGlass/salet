@@ -12,7 +12,6 @@ switch (process.env.NODE_ENV) {
       type: 'sqlite',
       database: 'db.sqlite',
       entities: ['**/*.entity.js'],
-      syncronize: true,
     });
     break;
   case 'test':
@@ -20,9 +19,19 @@ switch (process.env.NODE_ENV) {
       type: 'sqlite',
       database: 'test.sqlite',
       entities: ['**/*.entity.ts'],
+      migrationsRun: true,
     });
     break;
   case 'production':
+    Object.assign(dbConfig, {
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
+      entities: ['**/*.entity.ts'],
+      migrationsRun: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    });
     break;
   default:
     throw new Error('Unknown environment');
